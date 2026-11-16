@@ -1,0 +1,37 @@
+# 构建产物（Xcode 的派生数据目录，由 dm/ios 下的脚本生成）
+.iosdd/
+.iosdd_mac/
+.iosdd_*/
+.DS_Store
+/dm/linux/out/
+.venv-prepare/
+
+# Local work, prepared games and delivery output never enter source control.
+/.scratch/
+/.cache/
+/.tmp/
+/dist/
+/gamefiles/
+/private/
+**/__pycache__/
+*.py[cod]
+*.nsp
+*.xci
+*.nca
+*.nso
+*.sav
+*.dmp
+*.core
+*.profraw
+*.profdata
+prod.keys
+title.keys
+*.pem
+*.p12
+*.pfx
+*.jks
+*.keystore
+.env
+.env.*
+!.env.example
+!.env.sample

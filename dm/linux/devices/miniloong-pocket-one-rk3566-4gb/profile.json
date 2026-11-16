@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "miniloong-pocket-one-rk3566-4gb",
+  "model": "MiniLoong Pocket One / 4 GB",
+  "soc": "rk3566",
+  "architecture": "aarch64",
+  "memory_mib": 4096,
+  "preset": "rk3566-classic-character-only-v1"
+}

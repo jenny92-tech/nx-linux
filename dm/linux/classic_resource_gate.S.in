@@ -1,0 +1,385 @@
+// INPUT: Reviewed 90447 native-v6 executable and mutable policy control page.
+// OUTPUT: Shared file/inline-descriptor policy and nullable 3D preview gates.
+// POS: Source for classic_resource_gate.py TEMPLATE; no user assembler required.
+// Offline probe of the reviewed 90447 file-open entry. No host calls.
+.text
+.p2align 4
+.global dm_gate
+.type dm_gate,%function
+dm_gate:
+    stp x9, x10, [sp, #-64]!
+    stp x11, x12, [sp, #16]
+    stp x16, x17, [sp, #32]
+    mrs x12, nzcv
+    str x12, [sp, #48]
+    str x30, [sp, #56]
+    adr x16, .Lcontrol
+    ldr w17, [x16]
+    tbz w17, #0, .Lallow
+    cbz x0, .Lallow
+    add x17, x16, #4
+.Ltotal:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Ltotal
+    bl .Lresource_classify
+    cbz w17, .Lother
+    cmp w17, #1
+    b.eq .Lglobal
+    b .Lworld
+.Lother:
+    add x17, x16, #8
+    b .Lpass_count
+.Lglobal:
+    add x17, x16, #12
+.Lpass_count:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Lpass_count
+    b .Lallow
+.Lworld:
+    add x17, x16, #16
+.Lworld_count:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Lworld_count
+    cmp w10, #32
+    b.hs .Lafter_record
+    mov w11, #192
+    umull x10, w10, w11
+    add x10, x16, x10
+    add x10, x10, #256
+    ldr x12, [sp, #56]
+    str x12, [x10]
+    add x10, x10, #16
+    mov x9, x0
+    mov w17, #160
+.Lrecord:
+    ldrb w11, [x9], #1
+    strb w11, [x10], #1
+    cbz w11, .Lafter_record
+    subs w17, w17, #1
+    b.ne .Lrecord
+    strb wzr, [x10]
+.Lafter_record:
+    ldr w17, [x16]
+    tbz w17, #1, .Lallow
+    add x17, x16, #20
+.Ldenied_count:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Ldenied_count
+    ldr x30, [sp, #56]
+    ldr x12, [sp, #48]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #32]
+    ldp x11, x12, [sp, #16]
+    ldp x9, x10, [sp], #64
+    mov x0, xzr
+    ret
+.Lallow:
+    ldr x30, [sp, #56]
+    ldr x12, [sp, #48]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #32]
+    ldp x11, x12, [sp, #16]
+    ldp x9, x10, [sp], #64
+    stp x28, x19, [sp, #-32]!
+    .word 0x14000000 | (((@RESUME@ - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.size dm_gate, .-dm_gate
+
+.global dm_resource_classify
+.type dm_resource_classify,%function
+dm_resource_classify:
+.Lresource_classify:
+    cbz x0, .Lclass_other
+    mov x9, x0
+    adr x10, .Lhd_prefix
+.Lprefix_loop:
+    ldrb w11, [x10], #1
+    cbz w11, .Lhd
+    ldrb w12, [x9], #1
+    cmp w12, #92
+    mov w17, #47
+    csel w12, w17, w12, eq
+    orr w12, w12, #32
+    cmp w11, w12
+    b.ne .Lclass_other
+    b .Lprefix_loop
+.Lhd:
+    adr x10, .Lallow_table
+.Lnext_allowed:
+    ldrb w11, [x10], #1
+    cbz w11, .Lclass_world
+    add x9, x0, #8
+.Lallowed_loop:
+    ldrb w12, [x10], #1
+    ldrb w17, [x9], #1
+    cmp w17, #92
+    b.ne .Lallowed_normal
+    mov w17, #47
+.Lallowed_normal:
+    cbz w12, .Lallowed_compare
+    orr w17, w17, #32
+    orr w12, w12, #32
+.Lallowed_compare:
+    cmp w12, w17
+    b.ne .Lallowed_miss
+    subs w11, w11, #1
+    b.ne .Lallowed_loop
+    b .Lclass_shared
+.Lallowed_miss:
+    sub w11, w11, #1
+    add x10, x10, x11
+    b .Lnext_allowed
+.Lclass_other:
+    mov w17, #0
+    ret
+.Lclass_shared:
+    mov w17, #1
+    ret
+.Lclass_world:
+    mov w17, #2
+    ret
+.Lhd_prefix:
+    .asciz "data/hd/"
+.Lallow_table:
+    .byte 10
+    .ascii "global/ui/"
+    .byte 11
+    .ascii "global/sfx/"
+    .byte 13
+    .ascii "global/music/"
+    .byte 13
+    .ascii "global/video/"
+    .byte 13
+    .ascii "global/excel/"
+    .byte 15
+    .ascii "global/palette/"
+    .byte 16
+    .ascii "global/textures/"
+    .byte 8
+    .ascii "shaders/"
+    .byte 6
+    .ascii "local/"
+    .byte 3
+    .ascii "ui/"
+    .byte 12
+    .ascii "env/weather/"
+    .byte 8
+    .ascii "env/lut/"
+    .byte 17
+    .ascii "vfx/particles/ui/"
+    .byte 40
+    .ascii "vfx/meshes/lit_mesh/free_target_reticle/"
+    .byte 19
+    .ascii "vfx/textures/debug/"
+    .byte 22
+    .ascii "vfx/textures/gradient/"
+    .byte 21
+    .ascii "vfx/textures/default/"
+    .byte .Litems_end-.Litems
+.Litems:
+    .asciz "items/items.json"
+.Litems_end:
+    .byte .Lsets_end-.Lsets
+.Lsets:
+    .asciz "items/sets.json"
+.Lsets_end:
+    .byte .Luniques_end-.Luniques
+.Luniques:
+    .asciz "items/uniques.json"
+.Luniques_end:
+    .byte .Lcache_end-.Lcache
+.Lcache:
+    .asciz "texture_desc_cache.json"
+.Lcache_end:
+    .byte .Llod_end-.Llod
+.Llod:
+    .asciz "model_lod_desc.bin"
+.Llod_end:
+    .byte .Llod_json_end-.Llod_json
+.Llod_json:
+    .asciz "model_lod_desc.json"
+.Llod_json_end:
+    .byte .Lmanifest_end-.Lmanifest
+.Lmanifest:
+    .asciz "pak_manifest.json"
+.Lmanifest_end:
+    .byte 0
+.set .Lcontrol, dm_gate + (@CONTROL@ - @STUB@)
+.size dm_resource_classify, .-dm_resource_classify
+
+// Only the two JSON widget-factory lookup calls use this gate. The caller's
+// original missing-type branch skips construction and parent insertion safely.
+.p2align 4
+.global dm_widget_gate
+.type dm_widget_gate,%function
+dm_widget_gate:
+    stp x9, x10, [sp, #-64]!
+    stp x11, x12, [sp, #16]
+    stp x16, x17, [sp, #32]
+    mrs x12, nzcv
+    str x12, [sp, #48]
+    adr x16, .Lcontrol
+    ldr w17, [x16]
+    tbz w17, #0, .Lwidget_allow
+    cbz x0, .Lwidget_allow
+    adr x10, .Lwidget_types
+.Lwidget_next:
+    ldrb w11, [x10], #1
+    cbz w11, .Lwidget_allow
+    mov x9, x0
+.Lwidget_compare:
+    ldrb w12, [x10], #1
+    ldrb w17, [x9], #1
+    cmp w12, w17
+    b.ne .Lwidget_miss
+    subs w11, w11, #1
+    b.ne .Lwidget_compare
+    b .Lwidget_match
+.Lwidget_miss:
+    sub w11, w11, #1
+    add x10, x10, x11
+    b .Lwidget_next
+.Lwidget_match:
+    add x17, x16, #24
+.Lwidget_seen:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Lwidget_seen
+    ldr w17, [x16]
+    tbz w17, #1, .Lwidget_allow
+    add x17, x16, #28
+.Lwidget_deny_count:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Lwidget_deny_count
+    ldr x12, [sp, #48]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #32]
+    ldp x11, x12, [sp, #16]
+    ldp x9, x10, [sp], #64
+    mov x0, xzr
+    ret
+.Lwidget_allow:
+    ldr x12, [sp, #48]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #32]
+    ldp x11, x12, [sp, #16]
+    ldp x9, x10, [sp], #64
+    .word 0x14000000 | (((0x98aae4 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.Lwidget_types:
+    .byte 15
+    .asciz "Camera3DWidget"
+    .byte 19
+    .asciz "PlayerLoaderWidget"
+    .byte 18
+    .asciz "PlayerMoverWidget"
+    .byte 0
+.size dm_widget_gate, .-dm_widget_gate
+
+// Class-selection widgets embed this loader directly, bypassing JSON lookup.
+// Skip only its HD resource state machine; keep its original child UI updates.
+.p2align 4
+.global dm_preview_gate
+.type dm_preview_gate,%function
+dm_preview_gate:
+    stp x9, x10, [sp, #-32]!
+    stp x16, x17, [sp, #16]
+    adr x16, .Lcontrol
+    ldr w17, [x16]
+    tbz w17, #0, .Lpreview_allow
+    add x17, x16, #32
+.Lpreview_seen:
+    ldxr w9, [x17]
+    add w10, w9, #1
+    stxr w9, w10, [x17]
+    cbnz w9, .Lpreview_seen
+    ldr w17, [x16]
+    tbz w17, #1, .Lpreview_allow
+    add x17, x16, #36
+.Lpreview_skipped:
+    ldxr w9, [x17]
+    add w10, w9, #1
+    stxr w9, w10, [x17]
+    cbnz w9, .Lpreview_skipped
+    ldp x16, x17, [sp, #16]
+    ldp x9, x10, [sp], #32
+    mov x19, x0
+.global dm_preview_skip_branch
+dm_preview_skip_branch:
+    .word 0x14000000 | (((0x9adea8 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.Lpreview_allow:
+    ldp x16, x17, [sp, #16]
+    ldp x9, x10, [sp], #32
+    ldr w8, [x0, #0xe8c]
+.global dm_preview_resume_branch
+dm_preview_resume_branch:
+    .word 0x14000000 | (((0x9ad8e4 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.size dm_preview_gate, .-dm_preview_gate
+
+// Texture descriptors contain inline thumbnails that never open a separate file.
+// Apply the same path policy before descriptor allocation and Base64 decoding.
+.p2align 4
+.global dm_descriptor_gate
+.type dm_descriptor_gate,%function
+dm_descriptor_gate:
+    stp x0, x30, [sp, #-80]!
+    stp x9, x10, [sp, #16]
+    stp x11, x12, [sp, #32]
+    stp x16, x17, [sp, #48]
+    mrs x12, nzcv
+    str x12, [sp, #64]
+    adr x16, .Lcontrol
+    ldr w17, [x16]
+    tbz w17, #0, .Ldescriptor_allow
+    add x17, x16, #40
+.Ldescriptor_seen:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Ldescriptor_seen
+    mov x0, x21
+    bl .Lresource_classify
+    cmp w17, #2
+    b.ne .Ldescriptor_allow
+    ldr w17, [x16]
+    tbz w17, #1, .Ldescriptor_allow
+    add x17, x16, #44
+.Ldescriptor_skipped:
+    ldxr w10, [x17]
+    add w11, w10, #1
+    stxr w12, w11, [x17]
+    cbnz w12, .Ldescriptor_skipped
+    ldr x12, [sp, #64]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #48]
+    ldp x11, x12, [sp, #32]
+    ldp x9, x10, [sp, #16]
+    ldp x0, x30, [sp], #80
+.global dm_descriptor_skip_branch
+dm_descriptor_skip_branch:
+    .word 0x14000000 | (((0x1546010 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.Ldescriptor_allow:
+    ldr x12, [sp, #64]
+    msr nzcv, x12
+    ldp x16, x17, [sp, #48]
+    ldp x11, x12, [sp, #32]
+    ldp x9, x10, [sp, #16]
+    ldp x0, x30, [sp], #80
+    cbnz w10, .Ldescriptor_nonzero
+.global dm_descriptor_zero_branch
+dm_descriptor_zero_branch:
+    .word 0x14000000 | (((0x1546174 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.Ldescriptor_nonzero:
+.global dm_descriptor_nonzero_branch
+dm_descriptor_nonzero_branch:
+    .word 0x14000000 | (((0x1546198 - (@STUB@ + (. - dm_gate))) / 4) & 0x03ffffff)
+.size dm_descriptor_gate, .-dm_descriptor_gate

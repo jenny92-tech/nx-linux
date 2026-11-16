@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "id": "rk3566-2gb",
+  "model": "RK3566 / 2 GB target (exact model pending)",
+  "soc": "rk3566",
+  "architecture": "aarch64",
+  "memory_mib": 2048,
+  "preset": "rk3566-classic-flat-v1"
+}

@@ -1,0 +1,5 @@
+# Host Python dependencies; no game data or keys. Python 3.9–3.12.
+capstone==5.0.9
+lz4==4.4.5
+numpy==2.0.2
+Pillow==11.3.0

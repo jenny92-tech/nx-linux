@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "device_id": "rk3566-2gb",
+  "status": "hardware-validation-pending",
+  "physical_memory_mib_verified": null,
+  "gameplay_verified_on_this_memory_class": false,
+  "reason": "The available test unit has 4 GB. A lower PSS on it does not certify a 2 GB handheld.",
+  "candidate_runtime_validation": {
+    "status": "bounded-pass-on-4gb",
+    "observed_device_id": "miniloong-pocket-one-rk3566-4gb",
+    "mem_total_kib": 3998712,
+    "scope": [
+      "flat main menu",
+      "settings round trip (previous same-layout trial)",
+      "two classic camp entries",
+      "brief movement",
+      "inventory open/close",
+      "original save and exit"
+    ],
+    "max_sampled_pss_kib": 824509,
+    "max_sampled_rss_kib": 843664,
+    "vmhwm_kib": 1555468,
+    "internal_scale": 1,
+    "first_play_to_world_s": 4.828,
+    "second_play_to_world_s": 4.926,
+    "runtime_sha256": "f950dd5845efffd97705229bd6661d137626a0dcf8d98d3d62cb0d0a6385314e",
+    "validated_shader_image_sha256": "7cabaea0055ef20a0bcead936f5a54889e6e67b1247b438e7ab22f68d8a3f0d0",
+    "certifies_2gb": false
+  }
+}
