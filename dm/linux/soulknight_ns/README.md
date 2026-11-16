@@ -30,5 +30,15 @@ python3 dm/linux/soulknight_ns/build.py --backend gles
 
 已有 MiniLoong G52 Vulkan 和 TrimUI G57 Vulkan/GLES 的有限菜单、地牢及退出观察；
 不同 API、驱动、场景和测量构建分别记账，不承诺全关卡、稳定 60 FPS 或任意 1 GiB 设备可玩。
-汇总与限制见 [性能研究](https://github.com/jenny92-tech/Bogodroid/blob/knowledge-base/docs/soulknight-ns-vulkan-performance.md)。
 GPU 字节/像素、文件映射与 A64 夹具在 `dm/linux/tests/` 和本目录 `tests/`，不得用合成检查替代设备验收。
+
+2026-11-12—15 的历史固定构建有下列有限对照；本次公开源码的交叉编译没有新增设备测量：
+
+| 设备与场景 | 呈现速率观察 | 条件与限制 |
+|---|---|---|
+| MiniLoong RK3566 / G52 g13p0、Vulkan/Wayland、角色选择大厅 | 约 17.5→57.3/s | 同一 ELF 开/关/关/开，双方启用 snapshot，仅改变 shader-barrier flag；计时/抓图诊断相同，不是战斗或物理刷新率 |
+| TrimUI A523 / G57 r32p0、GLES/KMSDRM、角色选择大厅 | 约 8.28→41.13/s | 同内部尺寸，常量版本/合并与有条件同步过滤；未跳过绘制 |
+| 同一 TrimUI GLES 的有限真实战斗 | 窗口中位数约 55.87/s、最低 24.08/s | 含抓图且不是固定回放；不据此算战斗提帧比例或承诺稳定 60 |
+
+以上没有建立整体内存减少结论。MiniLoong 的较早 GLES 试验仍约 5–8/s，未完成战斗验收；
+不同 GPU、驱动、呈现路径与场景不能直接互套。
